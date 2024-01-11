@@ -1,4 +1,5 @@
--- C1 Q4:
+-- CHAPTER 1
+-- Q4:
 -- How should the definition of the function qsort be modified
 -- so that it produces a reverse sorted version of a list?
 qsort :: (Ord a) => [a] -> [a]
@@ -35,3 +36,23 @@ erqsort' (x : xs) ys = erqsort' larger $ x : erqsort' smaller ys
 
 erqsort :: (Ord a) => [a] -> [a]
 erqsort xs = erqsort' xs []
+
+-- CHAPTER 2
+-- Q4
+last' :: [a] -> a
+last' [x] = x
+last' (x : xs) = last' xs
+
+last'' :: [a] -> a
+last'' = head . reverse
+
+-- Q5
+init' :: [a] -> [a]
+init' [] = []
+init' [x] = []
+init' (x : xs) = x : init' xs
+
+init'' :: [a] -> [a]
+init'' = reverse . tail . reverse
+
+xs = [1 .. 10]
