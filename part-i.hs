@@ -55,4 +55,76 @@ init' (x : xs) = x : init' xs
 init'' :: [a] -> [a]
 init'' = reverse . tail . reverse
 
-xs = [1 .. 10]
+-- CHAPTER 4
+-- Q1
+halve :: [a] -> ([a], [a])
+halve xs = splitAt (length xs `div` 2) xs
+
+-- Q2
+-- a: head + tail
+third :: [a] -> a
+third = head . tail . tail
+
+-- b: !!
+third' :: [a] -> a
+third' xs = xs !! 2
+
+-- c: pattern matching
+third'' :: [a] -> a
+third'' (_ : _ : x : _) = x
+
+-- Q3
+-- a: conditional expression
+safetail :: [a] -> [a]
+safetail xs = if null xs then [] else tail xs
+
+-- b: guarded equations
+safetail' :: [a] -> [a]
+safetail' xs
+  | null xs = []
+  | otherwise = tail xs
+
+-- c: pattern matching
+safetail'' :: [a] -> [a]
+safetail'' [] = []
+safetail'' xs = tail xs
+
+-- Q4
+(||) :: Bool -> Bool -> Bool
+False || False = False
+_ || _ = True
+
+-- Q5
+(&&&) :: Bool -> Bool -> Bool
+a &&& b =
+  if a == True
+    then if b == True then True else False
+    else False
+
+-- Q6
+(&&&&) :: Bool -> Bool -> Bool
+a &&&& b = if a == True then b else False
+
+-- Q7
+mult :: Int -> Int -> Int -> Int
+mult x y z = x * y * z
+
+mult' :: Int -> Int -> Int -> Int
+mult' = \x -> \y -> \z -> x * y * z
+
+-- Q8: Luhn algorithm
+luhnSubtract :: Int -> Int
+luhnSubtract n
+  | n > 9 = n - 9
+  | otherwise = n
+
+luhnDouble :: Int -> Int
+luhnDouble n = luhnSubtract (n * 2)
+
+luhn4 :: Int -> Int -> Int -> Int -> Bool
+luhn4 a b c d = (a' + b' + c' + d') `mod` 10 == 0
+  where
+    a' = luhnDouble a
+    b' = luhnSubtract b
+    c' = luhnDouble c
+    d' = luhnSubtract d
