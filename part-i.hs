@@ -1,3 +1,5 @@
+import Data.List
+
 -- CHAPTER 1
 -- Q4:
 -- How should the definition of the function qsort be modified
@@ -111,3 +113,54 @@ mult x y z = x * y * z
 
 mult' :: Int -> Int -> Int -> Int
 mult' = \x -> \y -> \z -> x * y * z
+
+-- CHAPTER 5
+-- Q1
+sumsqr100 :: Int
+sumsqr100 = sum [x ^ 2 | x <- [1 .. 100]]
+
+-- Q2
+grid :: Int -> Int -> [(Int, Int)]
+grid m n = [(x, y) | x <- [0 .. m], y <- [0 .. n]]
+
+-- Q3
+square :: Int -> [(Int, Int)]
+square n = [(x, y) | (x, y) <- grid n n, x /= y]
+
+-- Q4
+replicate' :: Int -> a -> [a]
+replicate' n x = [x | _ <- [1 .. n]]
+
+-- Q5
+pyths :: Int -> [(Int, Int, Int)]
+pyths n =
+  [ (x, y, z)
+    | x <- [1 .. n],
+      y <- [1 .. n],
+      z <- [1 .. n],
+      x ^ 2 + y ^ 2 == z ^ 2
+  ]
+
+-- Q6
+factors :: Int -> [Int]
+factors n = [x | x <- [1 .. n], n `mod` x == 0]
+
+perfects :: Int -> [Int]
+perfects n = [x | x <- [1 .. n], sum (init $ factors x) == x]
+
+-- Q7
+result :: Bool
+result = [(x, y) | x <- [1, 2], y <- [3, 4]] == concat [[(x, y) | y <- [3, 4]] | x <- [1, 2]]
+
+-- Q8
+find' :: (Eq a) => a -> [(a, b)] -> [b]
+find' k ts = [v | (k', v) <- ts, k == k']
+
+positions :: (Eq a) => a -> [a] -> [Int]
+positions k xs = find' k (zip xs [0 ..])
+
+-- Q9
+scalarproduct :: [Int] -> [Int] -> Int
+scalarproduct [] _ = 0
+scalarproduct _ [] = 0
+scalarproduct (x : xs) (y : ys) = x * y + scalarproduct xs ys
