@@ -1,6 +1,5 @@
 import Data.Char (chr, ord)
 
--- Base conversion
 type Bit = Int
 
 bit2int :: [Bit] -> Int
