@@ -20,8 +20,8 @@ euclid a 0 = a
 euclid a b = euclid b (a `mod` b)
 
 -- Q6
-and :: [Bool] -> Bool
-and = foldr (&&) True
+and' :: [Bool] -> Bool
+and' = foldr (&&) True
 
 concat :: [[a]] -> [a]
 concat = foldr (++) []
@@ -71,3 +71,71 @@ take' n (x : xs) = x : take' (n - 1) xs
 last' :: [a] -> a
 last' [x] = x
 last' (_ : xs) = last' xs
+
+-- CHAPTER 7
+-- Q1
+-- map f (filter p x)
+
+-- Q2
+all' :: (a -> Bool) -> [a] -> Bool
+all' f = and . map f
+
+any' :: (a -> Bool) -> [a] -> Bool
+any' f = or . map f
+
+takeWhile' :: (a -> Bool) -> [a] -> [a]
+takeWhile' _ [] = []
+takeWhile' f (x : xs)
+  | f x = x : takeWhile' f xs
+  | otherwise = []
+
+dropWhile' :: (a -> Bool) -> [a] -> [a]
+dropWhile' _ [] = []
+dropWhile' f (x : xs)
+  | f x = dropWhile' f xs
+  | otherwise = xs
+
+-- Q3
+map' :: (a -> b) -> [a] -> [b]
+map' f = foldr (\x xs -> f x : xs) []
+
+filter' :: (a -> Bool) -> [a] -> [a]
+filter' f = foldr (\x xs -> if f x then x : xs else xs) []
+
+-- Q4
+dec2int :: [Int] -> Int
+dec2int = foldl (\x y -> 10 * x + y) 0
+
+-- Q5
+curry' :: ((a, b) -> c) -> a -> b -> c
+curry' f a b = f (a, b)
+
+uncurry' :: (a -> b -> c) -> (a, b) -> c
+uncurry' f (a, b) = f a b
+
+-- Q6
+unfold :: (a -> Bool) -> (a -> b) -> (a -> a) -> a -> [b]
+unfold p h t x
+  | p x = []
+  | otherwise = h x : unfold p h t (t x)
+
+int2bit :: Int -> [Int]
+int2bit = unfold (== 0) (`mod` 2) (`div` 2)
+
+chop8 :: [Int] -> [[Int]]
+chop8 = unfold null (take 8) (drop 8)
+
+map'' :: (a -> b) -> [a] -> [b]
+map'' f = unfold null (f . head) tail
+
+iterate' :: (a -> a) -> a -> [a]
+iterate' = unfold (const False) id
+
+-- Q9
+altMap' :: (a -> b) -> (a -> b) -> Bool -> [a] -> [b]
+altMap' _ _ _ [] = []
+altMap' f g True (a : as) = f a : altMap' f g False as
+altMap' f g False (a : as) = g a : altMap' f g True as
+
+altMap :: (a -> b) -> (a -> b) -> [a] -> [b]
+altMap f g = altMap' f g True
