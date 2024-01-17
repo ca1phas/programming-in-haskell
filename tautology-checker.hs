@@ -1,11 +1,13 @@
-import Data.List (permutations)
+-- Chapter 8 Q9
 
 data Prop
   = Const Bool
   | Var Char
   | Not Prop
+  | Or Prop Prop
   | And Prop Prop
   | Imply Prop Prop
+  | Equiv Prop Prop
 
 type Assoc k v = [(k, v)]
 
@@ -42,8 +44,10 @@ eval :: Subst -> Prop -> Bool
 eval _ (Const b) = b
 eval s (Var c) = find c s
 eval s (Not p) = not (eval s p)
+eval s (Or p q) = eval s p || eval s q
 eval s (And p q) = eval s p && eval s q
 eval s (Imply p q) = eval s p <= eval s q
+eval s (Equiv p q) = eval s p == eval s q
 
 find :: Char -> Subst -> Bool
 find _ [] = False

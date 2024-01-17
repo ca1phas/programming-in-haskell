@@ -139,3 +139,83 @@ altMap' f g False (a : as) = g a : altMap' f g True as
 
 altMap :: (a -> b) -> (a -> b) -> [a] -> [b]
 altMap f g = altMap' f g True
+
+-- CHAPTER 10
+-- Q1
+data Nat = Zero | Succ Nat
+  deriving (Show)
+
+add :: Nat -> Nat -> Nat
+add Zero m = m
+add (Succ n) m = add n (Succ m)
+
+mult :: Nat -> Nat -> Nat
+mult Zero _ = Zero
+mult (Succ Zero) m = m
+mult (Succ n) m = add m (mult n m)
+
+-- Q2
+data Tree a = Leaf a | Node (Tree a) a (Tree a)
+
+occurs :: (Ord a) => a -> Tree a -> Bool
+occurs x (Leaf y) = x == y
+occurs x (Node l y r)
+  | x < y = occurs x l
+  | x > y = occurs x r
+  | otherwise = x == y
+
+occurs' :: (Ord a) => a -> Tree a -> Bool
+occurs' x (Leaf y) = x == y
+occurs' x (Node l y r)
+  | ordering == LT = occurs' x l
+  | ordering == GT = occurs' x r
+  | ordering == EQ = True
+  | otherwise = False
+  where
+    ordering = compare x y
+
+-- Q3
+data Tree' a = Leaf' a | Node' (Tree' a) (Tree' a)
+
+leaves :: Tree' a -> Int
+leaves (Leaf' _) = 1
+leaves (Node' l r) = leaves l + leaves r
+
+balanced :: Tree' a -> Bool
+balanced (Leaf' _) = True
+balanced (Node' l r) =
+  abs (leaves l - leaves r) <= 1
+    && balanced l
+    && balanced r
+
+-- Q4
+halves :: [a] -> ([a], [a])
+halves xs = splitAt (length xs `div` 2) xs
+
+balance :: [a] -> Tree' a
+balance [x] = Leaf' x
+balance xs = Node' (balance as) (balance bs)
+  where
+    (as, bs) = halves xs
+
+-- Q5
+data Expr = Val Int | Add Expr Expr
+
+folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
+folde f g (Val n) = f n
+folde f g (Add x y) = g (folde f g x) (folde f g y)
+
+-- Q6
+data Maybe' a = Nothing' | Just' a
+
+instance (Eq a) => Eq (Maybe' a) where
+  (==) :: Maybe' a -> Maybe' a -> Bool
+  Just' a == Just' b = a == b
+  Nothing' == Nothing' = True
+  _ == _ = False
+
+-- instance (Eq a) => Eq [a] where
+--   (==) :: [a] -> [a] -> Bool
+--   [] == [] = True
+--   (x : xs) == (y : ys) = x == y && xs == ys
+--   _ == _ = False
