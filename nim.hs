@@ -39,7 +39,7 @@ removeStars :: Board -> Row -> Count -> Board
 removeStars board row count = updateBoard board row (board !! rowIndex row - count)
 
 emptyBoard :: Board -> Bool
-emptyBoard = foldr (\r -> (&&) (r == 0)) True
+emptyBoard = all (== 0)
 
 -- Logic (Input)
 isInt :: String -> Bool
@@ -98,7 +98,7 @@ getCount board row = do
       putStrLn "Invalid count"
       getCount board row
 
-play :: Board -> Player -> IO Player
+play :: Board -> Player -> IO ()
 play board player = do
   putStrLn $ "It's Player " ++ show player ++ "'s turn."
   printBoard board
@@ -106,10 +106,8 @@ play board player = do
   count <- getCount board row
   let board' = removeStars board row count
    in if emptyBoard board'
-        then do return player
+        then do putStrLn $ "The winner is Player " ++ show player ++ "!"
         else do play board' $ changePlayer player
 
 main :: IO ()
-main = do
-  winner <- play (newBoard noRows) startingPlayer
-  putStrLn $ "The winner is Player " ++ show winner ++ "!"
+main = play (newBoard noRows) startingPlayer
