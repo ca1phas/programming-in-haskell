@@ -1,22 +1,31 @@
+import System.IO (hSetEcho, stdin)
+
+getCh :: IO Char
+getCh = do
+  hSetEcho stdin False
+  x <- getChar
+  hSetEcho stdin True
+  return x
+
+getTarget :: IO String
+getTarget = do
+  x <- getCh
+  if x == '\n'
+    then do
+      putChar x
+      return []
+    else do
+      putChar '-'
+      xs <- getTarget
+      return (x : xs)
+
 getGuess :: IO String
 getGuess = do
   putStr "Guess the secret word: "
   getLine
 
-process' :: String -> String -> String -> String
-process' _ "" rs = rs
-process' ts (g : gs) rs =
-  process'
-    ts
-    gs
-    [ if r /= '_'
-        then r
-        else if t == g then t else r
-      | (t, r) <- zip ts (rs ++ repeat '_')
-    ]
-
-process :: String -> String -> IO String
-process target guess = do return $ process' target guess ""
+match :: String -> String -> String
+match ts gs = [if t `elem` gs then t else '-' | t <- ts]
 
 correct :: String -> IO Bool
 correct "" = do return True
@@ -27,17 +36,14 @@ correct (c : cs) = do
 play :: String -> IO ()
 play target = do
   guess <- getGuess
-  result <- process target guess
-  complete <- correct result
-
-  putStrLn result
-
-  if complete
-    then putStrLn "Your guess is correct"
-    else play target
+  if guess == target
+    then putStrLn "Correct!"
+    else do
+      putStrLn (match target guess)
+      play target
 
 main :: IO ()
 main = do
   putStr "Enter the secret word: "
-  target <- getLine
+  target <- getTarget
   play target
