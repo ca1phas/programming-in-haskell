@@ -1,61 +1,84 @@
-data Status = Empty | Cell deriving (Eq, Show)
+-- Definitions
+type Pos = (Int, Int)
 
-type Row = [Status]
+type Board = [Pos]
 
-type Board = [Row]
+-- Screen utilities
+cls :: IO ()
+cls = putStr "\ESC[2J"
 
-type Matrix = (Int, Int)
+writeat :: Pos -> String -> IO ()
+writeat p xs = do
+  goto p
+  putStr xs
 
--- Utilities
-neighbours :: Board -> Matrix -> [Matrix]
-neighbours board (m, n) =
-  [ (m', n')
-    | m' <- [m - 1, m, m + 1],
-      m' >= 0 && m' < size,
-      n' <- [n - 1, n, n + 1],
-      n' >= 0 && n' < size,
-      m' /= m || n' /= n
-  ]
-  where
-    size = length board
+goto :: Pos -> IO ()
+goto (x, y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 
-countCell' :: Board -> [Matrix] -> Int -> Int
-countCell' _ [] i = i
-countCell' board ((m, n) : ns) i
-  | board !! m !! n == Cell = countCell' board ns $ i + 1
-  | otherwise = countCell' board ns i
+showcells :: Board -> IO ()
+showcells b = sequence_ [writeat p "0" | p <- b]
 
-countCell :: Board -> Matrix -> Int
-countCell board cell = countCell' board (neighbours board cell) 0
+-- Game of life
+width :: Int
+width = 10
 
--- Rules
-survive :: Board -> Matrix -> Bool
-survive board (m, n) = board !! m !! n == Cell && (noLivingCells == 2 || noLivingCells == 3)
-  where
-    noLivingCells = countCell board (m, n)
+height :: Int
+height = 10
 
-birth :: Board -> Matrix -> Bool
-birth board (m, n) = board !! m !! n == Empty && countCell board (m, n) == 3
+isAlive :: Board -> Pos -> Bool
+isAlive b p = p `elem` b
 
--- Main
-nextGen :: Board -> Board
-nextGen board =
-  [ [ if survive board (m, n) || birth board (m, n)
-        then Cell
-        else Empty
-      | n <- ls
+isEmpty :: Board -> Pos -> Bool
+isEmpty b p = not (isAlive b p)
+
+neighbs :: Pos -> [Pos]
+neighbs (x, y) =
+  map
+    wrap
+    [ (x - 1, y - 1),
+      (x, y - 1),
+      (x + 1, y - 1),
+      (x - 1, y),
+      (x + 1, y),
+      (x - 1, y + 1),
+      (x, y + 1),
+      (x + 1, y + 1)
     ]
-    | m <- ls
-  ]
-  where
-    ls = [0 .. length board - 1]
-    size = length board
 
-initial :: Board
-initial =
-  [ [Empty, Empty, Empty, Empty, Empty],
-    [Empty, Empty, Empty, Cell, Empty],
-    [Empty, Cell, Empty, Cell, Empty],
-    [Empty, Empty, Cell, Cell, Empty],
-    [Empty, Empty, Empty, Empty, Empty]
+wrap :: Pos -> Pos
+wrap (x, y) = ((x - 1) `mod` width + 1, (y - 1) `mod` height + 1)
+
+liveneighbs :: Board -> Pos -> Int
+liveneighbs b = length . filter (isAlive b) . neighbs
+
+survivors :: Board -> [Pos]
+survivors b = [p | p <- b, liveneighbs b p `elem` [2, 3]]
+
+births :: Board -> [Pos]
+births b =
+  [ p
+    | p <- rmdups $ concatMap neighbs b,
+      isEmpty b p,
+      liveneighbs b p == 3
   ]
+
+rmdups :: (Eq a) => [a] -> [a]
+rmdups [] = []
+rmdups (x : xs) = x : rmdups (filter (/= x) xs)
+
+nextgen :: Board -> Board
+nextgen b = survivors b ++ births b
+
+life :: Board -> IO ()
+life b = do
+  cls
+  showcells b
+  wait 10000
+  life (nextgen b)
+
+wait :: Int -> IO ()
+wait n = sequence_ [return () | _ <- [1 .. n]]
+
+-- Example
+glider :: Board
+glider = [(4, 2), (2, 3), (4, 3), (3, 4), (4, 4)]
