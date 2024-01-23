@@ -11,7 +11,7 @@ type Board = [Row]
 
 -- Game Settings
 noRows :: Int
-noRows = 5
+noRows = 10
 
 startingRow :: Row
 startingRow = 1
@@ -65,14 +65,13 @@ changePlayer 1 = 2
 changePlayer 2 = 1
 
 -- IO
-printBoard' :: Board -> Int -> IO ()
-printBoard' [] _ = do return ()
-printBoard' (r : rs) rowNum = do
-  putStrLn (show rowNum ++ " : " ++ replicate r '*')
-  printBoard' rs (rowNum + 1)
-
+-- Chapter 10 Q2&3
 printBoard :: Board -> IO ()
-printBoard board = printBoard' board startingRow
+printBoard board =
+  sequence_
+    [ putStrLn (show i ++ " : " ++ replicate r '*')
+      | (i, r) <- zip [1 ..] board
+    ]
 
 getRow :: Board -> IO Int
 getRow board = do
