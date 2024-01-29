@@ -1,20 +1,6 @@
 module AI where
 
 import Game
-  ( Board,
-    Move,
-    Player (O, X),
-    allMoves,
-    blank,
-    complete,
-    getMove,
-    makeMove,
-    play,
-    printBoard,
-    switch,
-    validMoves,
-    winner,
-  )
 
 snds :: [(a, b)] -> [b]
 snds [] = []
