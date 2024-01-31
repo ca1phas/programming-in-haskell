@@ -1,8 +1,7 @@
-import Data.Char (isDigit)
+-- Chapter 11 Q3&4
+import Data.Char (isDigit, toUpper)
 import Data.List (transpose)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
-
--- import System.Random (randomRIO)
 
 -- Definitions
 data Tree a = Node a [Tree a] deriving (Show)
@@ -13,6 +12,9 @@ type Grid = [[Player]]
 
 size :: Int
 size = 3
+
+winlen :: Int
+winlen = 3
 
 depth :: Int
 depth = 9
@@ -37,12 +39,22 @@ turn g = if os <= xs then O else X
     ps = concat g
 
 wins :: Player -> Grid -> Bool
-wins p g = any line (rows ++ cols ++ dias)
+wins p g = any (line p) (rows ++ cols ++ dias)
   where
-    line = all (== p)
     rows = g
     cols = transpose g
     dias = [diag g, diag (map reverse g)]
+
+-- Q4b
+line :: Player -> [Player] -> Bool
+line p ps = line' p ps winlen
+
+line' :: Player -> [Player] -> Int -> Bool
+line' p' _ 0 = True
+line' p' [] _ = False
+line' p' (p : ps) n
+  | p == p' = line' p' ps (n - 1)
+  | otherwise = line' p' ps winlen
 
 diag :: Grid -> [Player]
 diag g = [g !! n !! n | n <- [0 .. size - 1]]
@@ -144,6 +156,26 @@ prune :: Int -> Tree a -> Tree a
 prune 0 (Node x _) = Node x []
 prune n (Node x ts) = Node x [prune (n - 1) t | t <- ts]
 
+-- Q4c
+mastertree :: Tree Grid
+mastertree = mastertree' empty O
+
+mastertree' :: Grid -> Player -> Tree Grid
+mastertree' g p = Node g [mastertree' g' (next p) | g' <- moves g p]
+
+getTree :: Grid -> Tree Grid
+getTree = getTree' mastertree
+
+getTree' :: Tree Grid -> Grid -> Tree Grid
+getTree' t g
+  | g == tg = t
+  | otherwise = head [getTree' (Node tg' ts') g | Node tg' ts' <- ts, identical tg' g]
+  where
+    Node tg ts = t
+
+identical :: Grid -> Grid -> Bool
+identical tg g = and [p == p' | (p, p') <- zip (concat tg) (concat g), p /= B]
+
 -- Minimax
 minimax :: Tree Grid -> Tree (Grid, Player)
 minimax (Node g [])
@@ -163,60 +195,102 @@ bestmove g p = head [g' | Node (g', p') _ <- ts, p' == best]
     tree = prune depth (gametree g p)
     Node (_, best) ts = minimax tree
 
--- Human vs AI
-main :: IO ()
-main = do
-  hSetBuffering stdout NoBuffering
-  play empty O
+-- Q4d
+pminimax :: Tree Grid -> Tree (Grid, Player)
+pminimax (Node g [])
+  | wins O g = Node (g, O) []
+  | wins X g = Node (g, X) []
+  | otherwise = Node (g, B) []
+pminimax (Node g ts)
+  | turn g == O =
+      Node
+        ( g,
+          if null os
+            then if null bs then X else B
+            else O
+        )
+        ts'
+  | turn g == X =
+      Node
+        ( g,
+          if null xs
+            then if null bs then O else B
+            else X
+        )
+        ts'
+  where
+    ts' = [pminimax t | t <- ts]
+    xs = [p | Node (_, p) _ <- ts', p == X]
+    bs = [p | Node (_, p) _ <- ts', p == B]
+    os = [p | Node (_, p) _ <- ts', p == O]
 
-play :: Grid -> Player -> IO ()
-play g p = do
-  cls
-  goto (1, 1)
-  putGrid g
-  play' g p
+bestmove4 :: Grid -> Grid
+bestmove4 g = head [g' | Node (g', p') _ <- ts, p' == best]
+  where
+    tree = prune depth (getTree g)
+    Node (_, best) ts = pminimax tree
 
--- Chapter 11
--- Q1
-nodes :: Tree a -> Int
-nodes (Node _ ts) = 1 + sum [nodes t | t <- ts]
+-- Q3
+bestmove3 :: Grid -> Grid
+bestmove3 g = mintree [(g', maxdepth t) | t <- ts, let Node (g', p') sts = t, p' == best]
+  where
+    tree = prune depth (getTree g)
+    Node (_, best) ts = minimax tree
 
 maxdepth :: Tree a -> Int
 maxdepth (Node _ []) = 0
 maxdepth (Node _ ts) = 1 + maximum [maxdepth t | t <- ts]
 
-tree :: Tree Grid
-tree = gametree empty O
+mintree :: [(Grid, Int)] -> Grid
+mintree [(x, a)] = x
+mintree ((x, a) : (y, b) : ls) = mintree (if a < b then (x, a) : ls else (y, b) : ls)
 
-q1a :: Int
-q1a = nodes tree
+-- Human vs AI
+main :: IO ()
+main = do
+  hSetBuffering stdout NoBuffering
 
-q1b :: Int
-q1b = maxdepth tree
+  -- Q4a
+  putStr "Select Player (O/X): "
+  p <- getLine
 
-bestmoves :: Grid -> Player -> [Grid]
-bestmoves g p = [g' | Node (g', p') _ <- ts, p' == best]
-  where
-    tree = prune depth (gametree g p)
-    Node (_, best) ts = minimax tree
+  case toUpper $ head p of
+    'O' -> play empty O X
+    'X' -> play empty O O
+    '_' -> do
+      putStrLn "Invalid player."
+      main
 
-play' :: Grid -> Player -> IO ()
-play' g p
+play :: Grid -> Player -> Player -> IO ()
+play g p ai = do
+  cls
+  goto (1, 1)
+  putGrid g
+  play' g p ai
+
+play' :: Grid -> Player -> Player -> IO ()
+play' g p ai
   | wins O g = putStrLn "Player O wins!\n"
   | wins X g = putStrLn "Player X wins!\n"
   | full g = putStrLn "It's a draw \n"
-  | p == X = do
+  | p /= ai = do
       i <- getNat (prompt p)
       case move g i p of
         [] -> do
           putStrLn "Invalid move"
-          play' g p
-        [g'] -> play g' (next p)
-  | p == O = do
-      putStrLn "Player O is thinking..."
+          play' g p ai
+        [g'] -> play g' (next p) ai
+  | p == ai = do
+      putStrLn $ "Player " ++ show ai ++ " is thinking..."
 
-      -- Q2
-      -- let mvs = bestmoves g p
-      -- r <- randomRIO 0 (length mvs - 1)
+      (play $! bestmove4 g) (next p) ai
 
-      (play $! bestmove g p) (next p)
+-- Time taken for 1st move
+-- bestmove -> 70s
+-- bestmove3 -> 70s
+-- bestmove4 -> 12s
+
+-- Time taken for 2nd move
+-- bestmove -> 8.5s
+-- bestmove3 -> 8.5s
+-- bestmove4 -> 0.8s
