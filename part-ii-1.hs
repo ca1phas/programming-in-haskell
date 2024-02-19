@@ -206,8 +206,7 @@ app (S st) = st
 instance Functor ST where
   fmap :: (a -> b) -> ST a -> ST b
   fmap g st = do
-    a <- st
-    return $ g a
+    g <$> st
 
 instance Applicative ST where
   pure :: a -> ST a
@@ -216,8 +215,7 @@ instance Applicative ST where
   (<*>) :: ST (a -> b) -> ST a -> ST b
   stf <*> sta = do
     f <- stf
-    a <- sta
-    return $ f a
+    f <$> sta
 
 instance Monad ST where
   (>>=) :: ST a -> (a -> ST b) -> ST b
