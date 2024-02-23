@@ -50,3 +50,33 @@ instance Traversable Tree where
 -- Q5
 filterF :: (Foldable t) => (a -> Bool) -> t a -> [a]
 filterF f = foldMap (\a -> [a | f a])
+
+-- Chapter 15
+-- Q4
+fibs' :: Integer -> Integer -> [Integer]
+fibs' z y = z' : fibs' z' z where z' = z + y
+
+fibs :: [Integer]
+fibs = 0 : 1 : fibs' 1 0
+
+-- Q5
+repeatT :: a -> Tree a
+repeatT a = Node (repeatT a) a (repeatT a)
+
+takeT :: Int -> Tree a -> Tree a
+takeT 0 _ = Leaf
+takeT _ Leaf = Leaf
+takeT n (Node l a r) = Node (takeT n' l) a (takeT n' r) where n' = n - 1
+
+replicateT :: Int -> a -> Tree a
+replicateT n = takeT n . repeatT
+
+-- Q6
+as :: Double -> Double -> [Double]
+as n a = a' : (if d < 0.000000001 then [] else as n a')
+  where
+    a' = (a + n / a) / 2
+    d = a - a'
+
+sqroot :: Double -> Double
+sqroot n = last (as n $ (1 + n) / 2)
