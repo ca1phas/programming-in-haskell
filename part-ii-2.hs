@@ -80,3 +80,45 @@ as n a = a' : (if d < 0.000000001 then [] else as n a')
 
 sqroot :: Double -> Double
 sqroot n = last (as n $ (1 + n) / 2)
+
+-- Chapter 16
+data Expr = Val Int | Add Expr Expr
+
+eval :: Expr -> Int
+eval (Val n) = n
+eval (Add l r) = eval l + eval r
+
+type Stack = [Int]
+
+type Code = [Op]
+
+data Op = PUSH Int | ADD
+  deriving (Show)
+
+exec :: Code -> Stack -> Stack
+exec [] s = s
+exec (PUSH n : c) s = exec c (n : s)
+exec (ADD : c) (m : n : s) = exec c (n + m : s)
+
+comp :: Expr -> Code
+comp (Val n) = [PUSH n]
+comp (Add l r) = comp l ++ comp r ++ [ADD]
+
+-- Q6
+data Tree' = Leaf' Int | Node' Tree' Tree'
+
+leaves :: Tree' -> Int
+leaves (Leaf' _) = 1
+leaves (Node' l r) = leaves l + leaves r
+
+nodes :: Tree' -> Int
+nodes (Leaf' _) = 0
+nodes (Node' l r) = 1 + nodes l + nodes r
+
+-- Q9
+comp' :: Expr -> Code -> Code
+comp' (Val n) c = PUSH n : c
+comp' (Add x y) c = comp' x (comp' y (ADD : c))
+
+comp2 :: Expr -> Code
+comp2 e = comp' e []
